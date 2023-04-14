@@ -26,7 +26,7 @@ import (
 	"strconv"
 )
 
-func FindOpenFiles(files map[string]struct{}, ignoreSelf bool, ignoreExe string) (openFiles map[string]struct{}, err error) {
+func FindOpenFiles(files map[string]struct{}, ignoreProcessFn func(string) bool) (openFiles map[string]struct{}, err error) {
 	procDir, err := os.Open("/proc")
 	if err != nil {
 		return nil, err
@@ -42,20 +42,10 @@ func FindOpenFiles(files map[string]struct{}, ignoreSelf bool, ignoreExe string)
 	}
 	for _, procEntry := range procEntries {
 		pid, _ := strconv.Atoi(procEntry.Name())
-		if strconv.Itoa(pid) != procEntry.Name() ||
-			ignoreSelf && pid == os.Getpid() {
+		if strconv.Itoa(pid) != procEntry.Name() {
 			continue
 		}
 		if err := func() error {
-			if len(ignoreExe) != 0 {
-				exe, err := os.Readlink(path.Join(procDir.Name(), procEntry.Name(), "exe"))
-				if err != nil {
-					return err
-				}
-				if exe == ignoreExe {
-					return nil
-				}
-			}
 			fdDir, err := os.Open(path.Join(procDir.Name(), procEntry.Name(), "fd"))
 			if err != nil {
 				return err
@@ -65,6 +55,7 @@ func FindOpenFiles(files map[string]struct{}, ignoreSelf bool, ignoreExe string)
 			if err != nil {
 				return err
 			}
+			var tempOpenFiles []string
 			for _, fdEntry := range fdEntries {
 				fdDest, err := os.Readlink(path.Join(fdDir.Name(), fdEntry.Name()))
 				if errors.Is(err, os.ErrNotExist) || errors.Is(err, os.ErrPermission) {
@@ -73,9 +64,16 @@ func FindOpenFiles(files map[string]struct{}, ignoreSelf bool, ignoreExe string)
 				if err != nil {
 					return err
 				}
-				if _, found := files[fdDest]; found {
-					openFiles[fdDest] = struct{}{}
+				if ignoreProcessFn(fdDest) {
+					tempOpenFiles = nil
+					break
 				}
+				if _, found := files[fdDest]; found {
+					tempOpenFiles = append(tempOpenFiles, fdDest)
+				}
+			}
+			for _, openFile := range tempOpenFiles {
+				openFiles[openFile] = struct{}{}
 			}
 			return nil
 		}(); err != nil && !errors.Is(err, os.ErrNotExist) && !errors.Is(err, os.ErrPermission) {

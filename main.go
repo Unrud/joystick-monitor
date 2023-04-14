@@ -30,8 +30,6 @@ import (
 	"golang.org/x/exp/maps"
 	"log"
 	"os"
-	"path"
-	"strconv"
 	"strings"
 	"sync"
 	"syscall"
@@ -128,6 +126,10 @@ func (proxy *JoystickMonitorProxy) Close() {
 	checkFatal(err)
 }
 
+func isIgnoreMarker(path string) bool {
+	return strings.HasSuffix(strings.TrimSuffix(path, " (deleted)"), ".ignore-joystick")
+}
+
 func main() {
 	var showVersion bool
 	flag.BoolVar(&showVersion, "version", false, "show program's version number and exit")
@@ -141,13 +143,15 @@ func main() {
 		return
 	}
 
+	ignoreMarkerFile := orFatal(os.CreateTemp("", "*.ignore-joystick"))
+	defer ignoreMarkerFile.Close()
+	checkFatal(os.Remove(ignoreMarkerFile.Name()))
 	joystickMonitorProxies := make(map[string]*JoystickMonitorProxy)
 	defer func() {
 		for _, proxy := range joystickMonitorProxies {
 			proxy.Close()
 		}
 	}()
-	ignoreExe := orFatal(os.Readlink(path.Join("/proc", strconv.Itoa(os.Getpid()), "exe")))
 	inputFileMonitor := orFatal(inotify.NewFileOpenCloseMonitor("/dev/input"))
 	defer inputFileMonitor.Close()
 	screensaver := orFatal(screensaver.NewScreensaver(appName, "user activity"))
@@ -203,7 +207,7 @@ func main() {
 			log.Println("uninhibit")
 		case <-rescanTimer.C:
 			rescanTimerSet = false
-			openJoystickPaths := orFatal(processes.FindOpenFiles(orFatal(joystick.ListAllJoysticks()), true, ignoreExe))
+			openJoystickPaths := orFatal(processes.FindOpenFiles(orFatal(joystick.ListAllJoysticks()), isIgnoreMarker))
 			for path, proxy := range joystickMonitorProxies {
 				if _, found := openJoystickPaths[path]; !found || !proxy.IsSame(path) {
 					proxy.Close()
