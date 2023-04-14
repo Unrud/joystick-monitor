@@ -38,7 +38,7 @@ import (
 
 const (
 	appName = "joystick-monitor"
-	version = "0.0.1"
+	version = "0.0.2"
 
 	maxRescanInterval = time.Second
 	inhibitTimeout    = 10 * time.Second
