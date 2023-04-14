@@ -1,0 +1,9 @@
+[Unit]
+Description=Monitors gamepads/joysticks used by applications and inhibits the screen saver during activity
+
+[Service]
+ExecStart=/usr/local/bin/joystick-monitor
+Restart=on-failure
+
+[Install]
+WantedBy=default.target
