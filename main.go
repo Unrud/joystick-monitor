@@ -27,7 +27,6 @@ import (
 	"github.com/unrud/joystick-monitor/joystick"
 	"github.com/unrud/joystick-monitor/processes"
 	"github.com/unrud/joystick-monitor/screensaver"
-	"golang.org/x/exp/maps"
 	"log"
 	"os"
 	"strings"
@@ -54,6 +53,13 @@ func checkFatal(err error) {
 func orFatal[T any](value T, err error) T {
 	checkFatal(err)
 	return value
+}
+
+func keys[K comparable, V any](m map[K]V) (keys []K) {
+	for key := range m {
+		keys = append(keys, key)
+	}
+	return keys
 }
 
 type JoystickMonitorProxy struct {
@@ -132,7 +138,7 @@ func main() {
 	flag.BoolVar(&dieWithParent, "die-with-parent", false, "exit program when parent terminates")
 	flag.BoolVar(&showVersion, "version", false, "show program's version number and exit")
 	flag.Usage = func() {
-		fmt.Fprintf(flag.CommandLine.Output(), "Usage of %s:\n", appName)
+		fmt.Fprintf(flag.CommandLine.Output(), "Usage of %v:\n", appName)
 		flag.PrintDefaults()
 	}
 	flag.Parse()
@@ -221,7 +227,7 @@ func main() {
 					}
 				}
 			}
-			log.Printf("scan [%s]\n", strings.Join(maps.Keys(joystickMonitorProxies), " "))
+			log.Printf("scan [%v]\n", strings.Join(keys(joystickMonitorProxies), " "))
 		}
 	}
 }
