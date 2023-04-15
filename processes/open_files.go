@@ -24,9 +24,22 @@ import (
 	"os"
 	"path"
 	"strconv"
+	"strings"
 )
 
-func FindOpenFiles(files map[string]struct{}, ignoreProcessFn func(string) bool) (openFiles map[string]struct{}, err error) {
+func CreateMarker(name string) (*os.File, error) {
+	file, err := os.CreateTemp("", name+".*")
+	if err != nil {
+		return nil, err
+	}
+	if err := os.Remove(file.Name()); err != nil {
+		file.Close()
+		return nil, err
+	}
+	return file, nil
+}
+
+func FindOpenFiles(files map[string]struct{}, ignoreMarkerName string) (openFiles map[string]struct{}, err error) {
 	procDir, err := os.Open("/proc")
 	if err != nil {
 		return nil, err
@@ -64,7 +77,7 @@ func FindOpenFiles(files map[string]struct{}, ignoreProcessFn func(string) bool)
 				if err != nil {
 					return err
 				}
-				if ignoreProcessFn(fdDest) {
+				if ignoreMarkerName != "" && strings.HasPrefix(path.Base(fdDest), ignoreMarkerName+".") {
 					tempOpenFiles = nil
 					break
 				}

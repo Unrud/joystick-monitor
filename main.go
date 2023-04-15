@@ -40,6 +40,7 @@ const (
 	appName = "joystick-monitor"
 	version = "0.0.2"
 
+	ignoreMarker      = "ignore-joystick"
 	maxRescanInterval = time.Second
 	inhibitTimeout    = 10 * time.Second
 )
@@ -126,10 +127,6 @@ func (proxy *JoystickMonitorProxy) Close() {
 	checkFatal(err)
 }
 
-func isIgnoreMarker(path string) bool {
-	return strings.HasSuffix(strings.TrimSuffix(path, " (deleted)"), ".ignore-joystick")
-}
-
 func main() {
 	var showVersion bool
 	flag.BoolVar(&showVersion, "version", false, "show program's version number and exit")
@@ -143,9 +140,8 @@ func main() {
 		return
 	}
 
-	ignoreMarkerFile := orFatal(os.CreateTemp("", "*.ignore-joystick"))
+	ignoreMarkerFile := orFatal(processes.CreateMarker(ignoreMarker))
 	defer ignoreMarkerFile.Close()
-	checkFatal(os.Remove(ignoreMarkerFile.Name()))
 	joystickMonitorProxies := make(map[string]*JoystickMonitorProxy)
 	defer func() {
 		for _, proxy := range joystickMonitorProxies {
@@ -207,7 +203,7 @@ func main() {
 			log.Println("uninhibit")
 		case <-rescanTimer.C:
 			rescanTimerSet = false
-			openJoystickPaths := orFatal(processes.FindOpenFiles(orFatal(joystick.ListAllJoysticks()), isIgnoreMarker))
+			openJoystickPaths := orFatal(processes.FindOpenFiles(orFatal(joystick.ListAllJoysticks()), ignoreMarker))
 			for path, proxy := range joystickMonitorProxies {
 				if _, found := openJoystickPaths[path]; !found || !proxy.IsSame(path) {
 					proxy.Close()
