@@ -128,7 +128,8 @@ func (proxy *JoystickMonitorProxy) Close() {
 }
 
 func main() {
-	var showVersion bool
+	var showVersion, dieWithParent bool
+	flag.BoolVar(&dieWithParent, "die-with-parent", false, "exit program when parent terminates")
 	flag.BoolVar(&showVersion, "version", false, "show program's version number and exit")
 	flag.Usage = func() {
 		fmt.Fprintf(flag.CommandLine.Output(), "Usage of %s:\n", appName)
@@ -140,6 +141,9 @@ func main() {
 		return
 	}
 
+	if dieWithParent {
+		checkFatal(processes.PrctlSetPdeathsig(syscall.SIGTERM))
+	}
 	ignoreMarkerFile := orFatal(processes.CreateMarker(ignoreMarker))
 	defer ignoreMarkerFile.Close()
 	joystickMonitorProxies := make(map[string]*JoystickMonitorProxy)
