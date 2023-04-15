@@ -15,12 +15,12 @@ Open a shell and copy/paste the following commands:
 ```bash
 # Install software
 sudo wget -O /usr/local/bin/joystick-monitor \
-  https://github.com/Unrud/joystick-monitor/releases/download/v0.0.2/joystick-monitor-linux-amd64
+  https://github.com/Unrud/joystick-monitor/releases/download/v0.0.3/joystick-monitor-linux-amd64
 sudo chmod +x /usr/local/bin/joystick-monitor
 
 # Create systemd service
 sudo wget -O /etc/systemd/user/joystick-monitor.service \
-  https://github.com/Unrud/joystick-monitor/releases/download/v0.0.2/joystick-monitor.service
+  https://github.com/Unrud/joystick-monitor/releases/download/v0.0.3/joystick-monitor.service
 
 # Enable and start the service for the current user
 systemctl --user enable --now joystick-monitor

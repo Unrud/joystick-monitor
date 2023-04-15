@@ -37,7 +37,7 @@ import (
 
 const (
 	appName = "joystick-monitor"
-	version = "0.0.2"
+	version = "0.0.3"
 
 	ignoreMarker      = "ignore-joystick"
 	maxRescanInterval = time.Second
