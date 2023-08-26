@@ -8,9 +8,16 @@ Supports the Linux
 The screen saver is controlled with
 [org.freedesktop.ScreenSaver](https://specifications.freedesktop.org/idle-inhibit-spec/latest/re01.html).
 
-## Setup
+## Installation
 
-Open a shell and copy/paste the following commands:
+### Fedora
+
+```bash
+sudo dnf copr enable unrud/joystick-monitor
+sudo dnf install joystick-monitor
+```
+
+### Manual
 
 ```bash
 # Install software
@@ -21,10 +28,18 @@ sudo chmod +x /usr/local/bin/joystick-monitor
 # Create systemd service
 sudo wget -O /etc/systemd/user/joystick-monitor.service \
   https://github.com/Unrud/joystick-monitor/releases/download/v0.0.3/joystick-monitor.service
+```
 
-# Enable and start the service for the current user
+## Setup
+
+### Enable and start the service for the current user
+
+```bash
 systemctl --user enable --now joystick-monitor
+```
 
-# Alternative: Enable service for all users
+### Enable service for all users
+
+```bash
 sudo systemctl --global enable joystick-monitor
 ```
